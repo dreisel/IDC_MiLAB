@@ -5,9 +5,8 @@
 #define RCLK 3 //define the latch pin(storage register clock input)
 
 SoftwareSerial rfid(7, 8);
-SoftwareSerial xbee(10, 9);
 
-
+byte j = 0;
 
 //Prototypes
 void check_for_notag(void);
@@ -17,12 +16,21 @@ void print_serial(void);
 void read_serial(void);
 void seek(void);
 void set_flag(void);
+void InitLeds(void);
+int mapMacToIndex(int);
+void turnOnAtIndex(int);
+
 
 //Global var
 int flag = 0;
 int Str1[11];
 
-bool ledDictionary[4];
+
+
+int greenIndexes[4] = {1 , 3 , 4 , 6};
+int redIndexes[4] = {0 , 2 , 5 , 7};
+
+bool ledDictionary[4] = {false, false, false, false};
 
 void setup() {
   // initialize the digital pin as an output.
@@ -32,52 +40,54 @@ void setup() {
   digitalWrite(SRCLK, LOW);
   digitalWrite(RCLK, LOW);
   Serial.begin(9600);
-  for (int i = 0; i < 4; i++) { //initialize
-    ledDictionary[i] = false;
-  }
-
-
   Serial.println("Start");
-
-  // set the data rate for the SoftwareSerial ports
-  xbee.begin(9600);
   rfid.begin(19200);
-  delay(10);
+  //delay(10);
+  InitLeds();
   halt();
 }
 
-
-int mapMacToIndex(unsigned long value) {
-  if (value == 2231033468L) { 
-     return 1;
-  } else if (value == 835979288L) { //Liron: theres an overflow in the id of one of the stamps... which turns out to this number. leaving as this for a while
-    return 3;
+void InitLeds() {
+  for (int i = 0; i < 8; i++) {
+    bitWrite(j, i, 1); //turn on all leds
+    write595(j);
+    delay(450);
   }
-  return 0;
+  for (int i = 0; i < 4; i++) {
+    bitWrite(j, greenIndexes[i], 0); //turn off green leds
+  }
+  write595(j);
+}
+int mapMacToIndex(int value) {
+  if (value == 34) {
+    return 0;
+  } else if (value == 156) { //Liron: theres an overflow in the id of one of the stamps... which turns out to this number. leaving as this for a while
+    return 1;
+  } else if (value == 157) { //Liron: theres an overflow in the id of one of the stamps... which turns out to this number. leaving as this for a while
+    return 2;
+  } else if (value == -1) {
+    return -1;
+  }
+  return -1;
 }
 
-String ReadFromRF() {
 
+void loop() {  
   read_serial();
-
 }
-
-void loop() {
-  String val = ReadFromRF();
-}
-
-
-
 
 
 void turnOnAtIndex(int i) {
+  if (ledDictionary[i] == false) {
+    //led was off, turning on
+    ledDictionary[i] = true;
+    bitWrite(j, greenIndexes[i], 1);
+    bitWrite(j, redIndexes[i], 0);
+  }
   Serial.print("turning on at index: ");
   Serial.println(i);
-
-  byte j = 0x80;
-  j >>= i;
   write595(j);
-  delay(10);
+  //delay(10);
 }
 void write595(byte data)
 {
@@ -140,17 +150,7 @@ void parse()
     }
   }
 }
-int numOfDigits(int n) {
-  int count = 0;
-  while (n != 0)
-  {
-    n /= 10;           /* n=n/10 */
-    ++count;
-  }
-  return count;
-}
-String str = String("");
-int tIndex = 1;
+
 void print_serial()
 {
   if (flag == 1) {
@@ -162,41 +162,14 @@ void print_serial()
     Serial.println();
     */
 
-    unsigned long val = 0;
-    for (int i = 8; i > 4; i--) {
-      
-      int digits = numOfDigits(Str1[i]);
-      for(int j = 0; j < digits; j++) {
-        val = val* 10;
-      }
-
-      
-      val += Str1[i];
-      Serial.println(val);
-    }
-    Serial.println();
-    Serial.print(Str1[8]);
-    Serial.print(Str1[7]);
-    Serial.print(Str1[6]);
-    Serial.print(Str1[5]);
-    Serial.println();
-    Serial.println(val);
-
-    //str = String(Str1[5]);
-    //Serial.println(str);
-    /*Serial.println(str);*/
-    int rtnIndex = mapMacToIndex(val);
+    int rtnIndex = mapMacToIndex(Str1[6]);
 
     Serial.print("Turned on index #: ");
-    Serial.println(val);
+    Serial.println(rtnIndex);
 
-    turnOnAtIndex(rtnIndex);
-    //print to XBee module
-    xbee.print(Str1[8], HEX);
-    xbee.print(Str1[7], HEX);
-    xbee.print(Str1[6], HEX);
-    xbee.print(Str1[5], HEX);
-    xbee.println();
+    if (rtnIndex >= 0) {
+      turnOnAtIndex(rtnIndex);
+    }
     delay(20);
     //check_for_notag();
   }
