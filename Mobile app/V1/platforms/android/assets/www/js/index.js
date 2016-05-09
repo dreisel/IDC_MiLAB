@@ -28,7 +28,7 @@ var app = {
     bindEvents: function() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
     },
-    // deviceready Event Handler
+    // devicerea8dy Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicitly call 'app.receivedEvent(...);'
@@ -47,3 +47,40 @@ var app = {
         console.log('Received Event: ' + id);
     }
 };
+
+
+window.ioio.open({ // start ioio and open ports we need
+    inputs: {
+        analogue: [37,39,40,41],
+        digital:[38]
+    },
+    outputs: {
+        digital:[33],
+        pwm: [
+            {pin: 10, freq: 1}, // set default frequency for the pin 10
+            {pin: 12, freq: 1}
+        ]
+    },
+    delay: 200 // Optionally set minimum delay between receiving data from IOIO
+}, function() {
+    // success
+}, function() {
+    //fail
+}, function(vals) {
+    // global all open pin listener
+
+    for(var i=0;i<vals.length;i++){
+        var pin = vals[i];
+        //for(var key in pin){console.log(key + ":" + pin[key]);}
+        switch(pin.class){
+            case window.ioio.PIN_INPUT_DIGITAL:
+            case window.ioio.PIN_OUTPUT_DIGITAL:
+            case window.ioio.PIN_INPUT_ANALOG:
+                //pin.pin pin.value
+                break;
+            case window.ioio.PIN_OUTPUT_PWM:
+                //pin.pin pin.freq
+                break;
+        }
+    }
+});

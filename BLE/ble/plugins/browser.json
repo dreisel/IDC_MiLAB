@@ -1,0 +1,25 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {}
+    },
+    "installed_plugins": {
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "com.ble.milab"
+        },
+        "cordova-plugin-bluetoothle": {
+            "PACKAGE_NAME": "com.ble.milab"
+        },
+        "cordova-plugin-ble-central": {
+            "PACKAGE_NAME": "com.ble.milab"
+        }
+    },
+    "dependent_plugins": {
+        "cordova-plugin-compat": {
+            "PACKAGE_NAME": "com.ble.milab"
+        }
+    }
+}
